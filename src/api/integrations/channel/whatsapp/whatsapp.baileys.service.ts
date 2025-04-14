@@ -920,6 +920,27 @@ export class BaileysStartupService extends ChannelStartupService {
           if (received.message?.protocolMessage?.editedMessage || received.message?.editedMessage?.message) {
             if (editedMessage) {
               await this.sendDataWebhook(Events.MESSAGES_EDITED, editedMessage);
+              const oldMessage = await this.getMessage(editedMessage.key, true);
+              if ((oldMessage as any)?.id) {
+                await this.prismaRepository.message.update({
+                  where: { id: (oldMessage as any).id },
+                  data: {
+                    message: editedMessage.editedMessage as any,
+                    messageTimestamp: (editedMessage.timestampMs as Long.Long).toNumber(),
+                    status: 'EDITED',
+                  },
+                });
+                await this.prismaRepository.messageUpdate.create({
+                  data: {
+                    fromMe: editedMessage.key.fromMe,
+                    keyId: editedMessage.key.id,
+                    remoteJid: editedMessage.key.remoteJid,
+                    status: 'EDITED',
+                    instanceId: this.instanceId,
+                    messageId: (oldMessage as any).id,
+                  },
+                });
+              }
             }
           }
 
@@ -3342,15 +3363,15 @@ export class BaileysStartupService extends ChannelStartupService {
 
     try {
       const oldMessage: any = await this.getMessage(data.key, true);
-       if (!oldMessage) throw new NotFoundException('Message not found');
-       if (oldMessage?.key?.remoteJid !== jid) {
-         throw new BadRequestException('RemoteJid does not match');
-       }
-       if (oldMessage?.messageTimestamp > Date.now() + 900000) {
-         // 15 minutes in milliseconds
-         throw new BadRequestException('Message is older than 15 minutes');
-       }
- 
+      if (!oldMessage) throw new NotFoundException('Message not found');
+      if (oldMessage?.key?.remoteJid !== jid) {
+        throw new BadRequestException('RemoteJid does not match');
+      }
+      if (oldMessage?.messageTimestamp > Date.now() + 900000) {
+        // 15 minutes in milliseconds
+        throw new BadRequestException('Message is older than 15 minutes');
+      }
+
       const response = await this.client.sendMessage(jid, {
         ...(options as any),
         edit: data.key,
