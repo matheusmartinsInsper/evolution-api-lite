@@ -2351,7 +2351,7 @@ export class BaileysStartupService extends ChannelStartupService {
       const isAnimated = this.isAnimated(image, imageBuffer);
 
       if (isAnimated) {
-        return await sharp(imageBuffer, { animated: true }).webp({ quality: 80, animated: true }).toBuffer();
+        return await sharp(imageBuffer, { animated: true }).webp({ quality: 80 }).toBuffer();
       } else {
         return await sharp(imageBuffer).webp().toBuffer();
       }
@@ -2368,9 +2368,11 @@ export class BaileysStartupService extends ChannelStartupService {
   }
 
   private isAnimated(image: string, buffer: Buffer): boolean {
-    if (image.includes('.gif')) return true;
+    const lowerCaseImage = image.toLowerCase();
 
-    if (image.includes('.webp')) return this.isAnimatedWebp(buffer);
+    if (lowerCaseImage.includes('.gif')) return true;
+     
+    if (lowerCaseImage.includes('.webp')) return this.isAnimatedWebp(buffer);
     return false;
   }
 
