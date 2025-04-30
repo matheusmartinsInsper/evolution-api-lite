@@ -2348,16 +2348,13 @@ export class BaileysStartupService extends ChannelStartupService {
         imageBuffer = Buffer.from(response.data, 'binary');
       }
 
-       const isAnimated = image.includes('.gif') || 
-                          (image.includes('.webp') && this.isAnimatedWebp(imageBuffer));
-       
-       if (isAnimated) {
-         return await sharp(imageBuffer, { animated: true })
-           .webp({ quality: 80, animated: true })
-           .toBuffer();
-       } else {
-         return await sharp(imageBuffer).webp().toBuffer();
-       }
+      const isAnimated = this.isAnimated(image, imageBuffer);
+
+      if (isAnimated) {
+        return await sharp(imageBuffer, { animated: true }).webp({ quality: 80, animated: true }).toBuffer();
+      } else {
+        return await sharp(imageBuffer).webp().toBuffer();
+      }
     } catch (error) {
       console.error('Erro ao converter a imagem para WebP:', error);
       throw error;
@@ -2366,15 +2363,14 @@ export class BaileysStartupService extends ChannelStartupService {
 
   private isAnimatedWebp(buffer: Buffer): boolean {
     if (buffer.length < 12) return false;
-    
-    for (let i = 0; i < buffer.length - 4; i++) {
-      if (buffer[i] === 0x41 && // 'A'
-          buffer[i + 1] === 0x4E && // 'N'
-          buffer[i + 2] === 0x49 && // 'I'
-          buffer[i + 3] === 0x4D) { // 'M'
-        return true;
-      }
-    }
+
+    return buffer.indexOf(Buffer.from('ANIM')) !== -1;
+  }
+
+  private isAnimated(image: string, buffer: Buffer): boolean {
+    if (image.includes('.gif')) return true;
+
+    if (image.includes('.webp')) return this.isAnimatedWebp(buffer);
     return false;
   }
 

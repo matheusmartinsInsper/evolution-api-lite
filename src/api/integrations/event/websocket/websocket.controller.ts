@@ -25,39 +25,39 @@ export class WebsocketController extends EventController implements EventControl
 
     this.socket = new SocketIO(httpServer, {
       cors: { origin: this.cors },
-       allowRequest: async (req, callback) => {
-         try {
-           const url = new URL(req.url || '', 'http://localhost');
-           const params = new URLSearchParams(url.search);
- 
-           // Permite conexões internas do Socket.IO (EIO=4 é o Engine.IO v4)
-           if (params.has('EIO')) {
-             return callback(null, true);
-           }
- 
-           const apiKey = params.get('apikey') || (req.headers.apikey as string);
- 
-           if (!apiKey) {
-             this.logger.error('Connection rejected: apiKey not provided');
-             return callback('apiKey is required', false);
-           }
- 
-           const instance = await this.prismaRepository.instance.findFirst({ where: { token: apiKey } });
- 
-           if (!instance) {
-             const globalToken = configService.get<Auth>('AUTHENTICATION').API_KEY.KEY;
-             if (apiKey !== globalToken) {
-               this.logger.error('Connection rejected: invalid global token');
-               return callback('Invalid global token', false);
-             }
-           }
- 
-           callback(null, true);
-         } catch (error) {
-           this.logger.error('Authentication error:');
-           this.logger.error(error);
-           callback('Authentication error', false);
-         }
+      allowRequest: async (req, callback) => {
+        try {
+          const url = new URL(req.url || '', 'http://localhost');
+          const params = new URLSearchParams(url.search);
+
+          // Permite conexões internas do Socket.IO (EIO=4 é o Engine.IO v4)
+          if (params.has('EIO')) {
+            return callback(null, true);
+          }
+
+          const apiKey = params.get('apikey') || (req.headers.apikey as string);
+
+          if (!apiKey) {
+            this.logger.error('Connection rejected: apiKey not provided');
+            return callback('apiKey is required', false);
+          }
+
+          const instance = await this.prismaRepository.instance.findFirst({ where: { token: apiKey } });
+
+          if (!instance) {
+            const globalToken = configService.get<Auth>('AUTHENTICATION').API_KEY.KEY;
+            if (apiKey !== globalToken) {
+              this.logger.error('Connection rejected: invalid global token');
+              return callback('Invalid global token', false);
+            }
+          }
+
+          callback(null, true);
+        } catch (error) {
+          this.logger.error('Authentication error:');
+          this.logger.error(error);
+          callback('Authentication error', false);
+        }
       },
     });
 
