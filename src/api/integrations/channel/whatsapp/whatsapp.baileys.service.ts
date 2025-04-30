@@ -998,7 +998,8 @@ export class BaileysStartupService extends ChannelStartupService {
             existingChat &&
             received.pushName &&
             existingChat.name !== received.pushName &&
-            received.pushName.trim().length > 0
+            received.pushName.trim().length > 0 &&
+            !received.key.remoteJid.includes('@g.us')
           ) {
             this.sendDataWebhook(Events.CHATS_UPSERT, [{ ...existingChat, name: received.pushName }]);
             if (this.configService.get<Database>('DATABASE').SAVE_DATA.CHATS) {
@@ -2371,7 +2372,7 @@ export class BaileysStartupService extends ChannelStartupService {
     const lowerCaseImage = image.toLowerCase();
 
     if (lowerCaseImage.includes('.gif')) return true;
-     
+
     if (lowerCaseImage.includes('.webp')) return this.isAnimatedWebp(buffer);
     return false;
   }
